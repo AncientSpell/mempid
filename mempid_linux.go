@@ -25,8 +25,11 @@ const (
 
 func (pm *ProgMutex) GetPid() (int, error) {
 	// int shmget(key_t key, size_t size of Byte, int shmflg);
-	shmid, _, errno := syscall.Syscall(syscall.SYS_SHMGET, pm.key, int_size, IPC_EXCL)
+	shmid, _, errno := syscall.Syscall(syscall.SYS_SHMGET, pm.key, int_size, 0666)
 	if errno != 0 {
+		if errno == 2 {
+			return 0, nil
+		}
 		return 0, fmt.Errorf("syscall error: %v", errno)
 	}
 
@@ -53,9 +56,9 @@ func (pm *ProgMutex) GetPid() (int, error) {
 
 func (pm *ProgMutex) LockProg() error {
 	// create the shared memory and put pid to it
-	shmid, _, errno := syscall.Syscall(syscall.SYS_SHMGET, pm.key, int_size, IPC_EXCL)
+	shmid, _, errno := syscall.Syscall(syscall.SYS_SHMGET, pm.key, int_size, 0666)
 	if errno != 0 {
-		shmid, _, errno = syscall.Syscall(syscall.SYS_SHMGET, pm.key, int_size, IPC_CREAT|IPC_EXCL)
+		shmid, _, errno = syscall.Syscall(syscall.SYS_SHMGET, pm.key, int_size, IPC_CREAT|0666)
 		if errno != 0 {
 			return fmt.Errorf("syscall error: %v", errno)
 		}
@@ -70,7 +73,7 @@ func (pm *ProgMutex) LockProg() error {
 }
 
 func (pm *ProgMutex) UnLockProg() {
-	if shmid, _, errno := syscall.Syscall(syscall.SYS_SHMGET, pm.key, int_size, IPC_EXCL); errno != 0 {
+	if shmid, _, errno := syscall.Syscall(syscall.SYS_SHMGET, pm.key, int_size, 0666); errno == 0 {
 		syscall.Syscall6(syscall.SYS_SHMCTL, shmid, IPC_RMID, 0, 0, 0, 0)
 	}
 }

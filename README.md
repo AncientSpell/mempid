@@ -4,11 +4,7 @@ Record pid to shared memory to create a mutex progress
 ## Usage
 ```go
 func main() {
-	pid, err := mempid.GetPid()
-	if err != nil {
-		fmt.Println("fail to get pid.", err)
-		return
-	}
+	pid, _ := mempid.GetPid()
 	if pid != 0 {
 		fmt.Println("master process id is", pid)
 		return
